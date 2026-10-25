@@ -28,11 +28,11 @@ Lines in **[brackets]** are what to do on screen. Everything else is what you sa
 
 **[Landing page, scrolled to the top]**
 
-> Hi, I'm Hemam, and this is WindSight, a pilot we built for your day-ahead trading desk.
+> Hi, I'm Hemam Pandey, and this is WindSight, built for your day-ahead trading of electricity.
 >
-> Every morning your team has to buy tomorrow's electricity before the auction closes: 09:20 for EPEX, 09:50 for N2EX. The biggest unknown in that decision is wind. If wind comes in lower than forecast, you're short and buying expensive power at the last minute. If it comes in higher, you've overpaid.
+> The problem is Every morning your team has to buy tomorrow's electricity before the auction closes, depending on the market and the biggest unknown in forecasting decision is wind. If wind comes in lower than forecast, you're short and buying expensive power at the last minute. If it comes in higher, you've overpaid.
 >
-> So we asked two questions. What did the wind forecast actually say when you had to decide? And how much should you trust it?
+> So this application helps you forecast wind that cost you less errors.
 
 ### 2. The headline results (0:35 – 1:20)
 
