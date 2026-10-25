@@ -87,7 +87,8 @@ def day_view(delivery_day: date, decision_time: time) -> dict:
         "decision_cutoff": cutoff.tz_convert(UK_TZ).to_pydatetime(),
         "forecast_publish_time": _clean(used_publish),
         "calibration": {
-            "scale": _clean(first["scale"]) if first is not None else None,
+            "slope": _clean(first["slope"]) if first is not None else None,
+            "intercept_mw": _clean(first["intercept_mw"]) if first is not None else None,
             "ratio_low": _clean(first["ratio_lo"]) if first is not None else None,
             "ratio_high": _clean(first["ratio_hi"]) if first is not None else None,
             "hours": int(first["calibration_hours"]) if first is not None else 0,

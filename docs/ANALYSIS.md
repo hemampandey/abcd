@@ -6,15 +6,15 @@ Backtest of 31 day-ahead decisions (delivery 2 Jan – 1 Feb 2026, 744 delivery 
 
 | Metric | Elexon forecast | Calibrated |
 |---|---|---|
-| MAE | 2.04 GW | 1.32 GW |
+| MAE | 2.04 GW | 1.22 GW |
 | RMSE | 2.50 GW | — |
-| Bias (actual − forecast) | −1.75 GW | −0.43 GW |
-| nMAE (MAE ÷ mean actual 11.3 GW) | 18.1% | 11.7% |
+| Bias (actual − forecast) | −1.75 GW | −0.12 GW |
+| nMAE (MAE ÷ mean actual 11.3 GW) | 18.1% | 10.8% |
 | P90 absolute error | 4.10 GW | — |
 | Worst hourly shortfall | 6.87 GW (12 Jan) | — |
-| P10–P90 range coverage | — | 82.1% (target 80%) |
+| P10–P90 range coverage | — | 79.3% (target 80%), average width 4.5 GW |
 
-N2EX gate (09:50, uses the 09:30 run, 14.5–37.5 h ahead): MAE 2.01 GW, calibrated 1.30 GW.
+N2EX gate (09:50, uses the 09:30 run, 14.5–37.5 h ahead): MAE 2.01 GW, calibrated 1.21 GW.
 
 ## Findings
 
@@ -30,8 +30,19 @@ N2EX gate (09:50, uses the 09:30 run, 14.5–37.5 h ahead): MAE 2.01 GW, calibra
    | > 20 GW | −4.6 GW |
 
    This is consistent with transmission constraints and curtailment on windy days. Metered output (FUELHH) is after curtailment, while the forecast reflects available wind. On 12 Jan even runs published *after* the gate were about 5 GW too high, which suggests the gap was not weather uncertainty.
-3. **Calibration helps a lot and is safe.** Scaling by the ratio Σactual/Σforecast over the previous 14 settled days cuts MAE by 35%. The scale ranged from 0.85 to 0.96 across January. The calibration only uses data available at decision time, so the gain is achievable in practice.
-4. **The range is reliable.** 82% of outcomes fell inside the P10–P90 range, close to the 80% target. A trader can treat the P10 line as a 1-in-10-hour low-wind case.
+3. **A wind-level-aware correction helps a lot and is safe.** Because the miss grows with wind level, the correction is a straight line fitted to actual vs forecast over the previous 14 settled days, capped so it never exceeds Elexon's forecast. It cuts MAE by 40% (2.04 → 1.22 GW) and removes nearly all the bias. It only uses data available at decision time, so the gain is achievable in practice.
+
+   Out-of-sample comparison of correction methods (EPEX 09:20, same 14-day window):
+
+   | Method | MAE | Days worse than Elexon | Range width at ~80% coverage |
+   |---|---|---|---|
+   | Raw Elexon | 2.04 GW | — | — |
+   | Single scale factor (Σactual/Σforecast) | 1.32 GW | 5 | 5.5 GW |
+   | Straight line, uncapped | 1.26 GW | 7 | 4.7 GW |
+   | **Straight line, capped at Elexon (used)** | **1.22 GW** | **5** | **4.5 GW** |
+
+   No method beats Elexon on every day: on calm days with no over-forecast (e.g. 14 Jan) any correction overshoots. The chosen method wins on 26 of 31 days.
+4. **The range is reliable and tighter.** 79% of outcomes fell inside the P10–P90 range, close to the 80% target, with an average width of 4.5 GW (5.5 GW with the old scale-factor method). A trader can treat the P10 line as a 1-in-10-hour low-wind case.
 5. **Horizon matters, but timing options are limited.** MAE rises from 1.66 GW (0–6 h ahead) to 2.33 GW (42–48 h). Deciding late on D-1 (after the 22:30 run) would give 1.82 GW, but both GB day-ahead auctions close by 09:50. Among realistic options, N2EX 09:50 is slightly better than EPEX 09:20 because the 09:30 run is available. Note the 07:30 run was slightly *worse* than the 04:30 run this month (2.04 vs 2.02 GW), which shows new runs are not always better.
 6. **Early-morning delivery hours are hardest.** Lead time grows through the delivery day, from about 17 h at 00:00 to about 40 h at 23:00 UK. Even so, hourly MAE peaks for 03:00–07:00 (about 2.4 GW), not for the late hours. The wind regime matters as much as the horizon.
 

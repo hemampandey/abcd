@@ -43,7 +43,7 @@ export function LandingView({ meta, open }: { meta: Meta; open: (v: AppView) => 
         <li>
           <span className="step-num">2</span>
           <h3>Correct its bias</h3>
-          <p>Scaled by its track record over the last 14 settled days.</p>
+          <p>Adjusted for wind level, learned from the last 14 settled days.</p>
         </li>
         <li>
           <span className="step-num">3</span>

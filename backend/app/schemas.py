@@ -49,7 +49,8 @@ class RunOut(BaseModel):
 
 
 class CalibrationOut(BaseModel):
-    scale: float | None
+    slope: float | None
+    intercept_mw: float | None
     ratio_low: float | None
     ratio_high: float | None
     hours: int

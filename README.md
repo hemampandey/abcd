@@ -16,13 +16,13 @@ WindSight is a web app for a UK utility's day-ahead power buying team. It answer
 
 | | Elexon forecast at gate | Calibrated (WindSight) |
 |---|---|---|
-| Typical hourly error (MAE) | **2.04 GW** (18% of mean output) | **1.32 GW** (−35%) |
-| Bias (actual − forecast) | **−1.75 GW**: wind fell short in 85% of hours | −0.43 GW |
+| Typical hourly error (MAE) | **2.04 GW** (18% of mean output) | **1.22 GW** (−40%) |
+| Bias (actual − forecast) | **−1.75 GW**: wind fell short in 85% of hours | −0.12 GW |
 | 1-in-10 hour error (P90 abs) | 4.1 GW | — |
-| P10–P90 range reliability | — | **82%** of hours inside (target 80%) |
+| P10–P90 range reliability | — | **79%** of hours inside (target 80%) |
 
 - The official forecast **over-predicted** GB metered wind throughout January. The gap grows with wind speed: about −0.5 GW when the forecast was under 5 GW, and about −4.6 GW when it was over 20 GW. That pattern fits transmission constraints and curtailment on windy days.
-- A simple out-of-sample scaling, learned only from days already settled at decision time, removes most of the bias. It cuts MAE by about a third.
+- A wind-level-aware correction, learned only from days already settled at decision time, removes nearly all of the bias and cuts MAE by 40%. It beats the raw forecast on 26 of 31 days.
 - Error grows with horizon: 1.7 GW MAE at 0–6 h ahead and 2.3 GW at 42–48 h ahead. The N2EX gate (09:50) can use the 09:30 run and is slightly more accurate than EPEX (09:20): 2.01 vs 2.04 GW.
 
 Details: [docs/ANALYSIS.md](docs/ANALYSIS.md).
@@ -57,7 +57,7 @@ npm run dev        # http://localhost:5173, proxies /api to :8000
 ### Tests and lint
 
 ```bash
-cd backend && pytest -q && ruff check app tests     # 28 tests
+cd backend && pytest -q && ruff check app tests     # 30 tests
 cd frontend && npm test && npm run lint              # unit tests + type-check
 ```
 
@@ -122,7 +122,7 @@ If the snapshot files are missing, the backend downloads the data from Elexon au
 - **Scope.** Decisions made in January 2026 → delivery days **2 Jan – 1 Feb 2026** (D-1 decides for D).
 - **Latest forecast.** For every delivery hour, the most recent `WINDFOR` value with `publishTime ≤ decision time on D-1` (UK local). Presets: **EPEX 09:20** and **N2EX 09:50** (GB day-ahead auction gate closures). Any custom time also works.
 - **Actuals.** `FUELHH` with `fuelType=WIND`, half-hourly, averaged to hourly to match the hourly forecast and hourly auction products.
-- **Calibration and range.** Learned only from delivery days D-15 to D-2, the days fully settled before the D-1 decision. Calibrated = forecast × Σactual/Σforecast. Range = forecast × P10/P90 of hourly actual/forecast ratios.
+- **Calibration and range.** Learned only from delivery days D-15 to D-2, the days fully settled before the D-1 decision. Calibrated = min(intercept + slope × forecast, forecast): a straight line fitted to recent actual vs forecast, never above Elexon. Range = calibrated × P10/P90 of hourly actual/calibrated ratios.
 - **Error sign.** `error = actual − forecast`. Negative means wind fell short and the buyer is short.
 
 Full rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

@@ -103,17 +103,21 @@ def test_backtest_error_sign_and_lead_time():
 # --- calibration ------------------------------------------------------------ #
 
 
-def _synthetic_backtest(days: list[date], ratio: float) -> pd.DataFrame:
+def _synthetic_backtest(days: list[date], actual_of, varying: bool = True) -> pd.DataFrame:
+    """Hourly backtest rows; the forecast ramps 5-16.5 GW across each day (or is flat)."""
     frames = []
     for d in days:
         hours = an.delivery_hours(d)
+        forecast = (
+            5_000.0 + 500.0 * np.arange(len(hours)) if varying else np.full(len(hours), 10_000.0)
+        )
         frames.append(
             pd.DataFrame(
                 {
                     "delivery_date": d,
                     "start_time": hours,
-                    "forecast_mw": 10_000.0,
-                    "actual_mw": 10_000.0 * ratio,
+                    "forecast_mw": forecast,
+                    "actual_mw": actual_of(forecast),
                 }
             )
         )
@@ -122,28 +126,51 @@ def _synthetic_backtest(days: list[date], ratio: float) -> pd.DataFrame:
     return bt
 
 
-def test_calibration_learns_scale_from_history():
-    days = [date(2026, 1, 1) + timedelta(days=i) for i in range(20)]
-    out = an.add_calibration(_synthetic_backtest(days, 0.8), lookback_days=14)
-    last = out[out["delivery_date"] == days[-1]]
-    assert last["scale"].iloc[0] == pytest.approx(0.8)
-    assert last["calibrated_mw"].iloc[0] == pytest.approx(8000.0)
+DAYS = [date(2026, 1, 1) + timedelta(days=i) for i in range(20)]
+
+
+def test_calibration_learns_level_aware_line():
+    # Over-forecast that grows with wind level: actual = 0.8 * forecast - 500.
+    out = an.add_calibration(_synthetic_backtest(DAYS, lambda f: 0.8 * f - 500), lookback_days=14)
+    last = out[out["delivery_date"] == DAYS[-1]]
+    assert last["slope"].iloc[0] == pytest.approx(0.8)
+    assert last["intercept_mw"].iloc[0] == pytest.approx(-500)
+    at_10gw = last[last["forecast_mw"] == 10_000.0]
+    assert at_10gw["calibrated_mw"].iloc[0] == pytest.approx(7_500.0)
+
+
+def test_calibration_never_adds_wind_above_elexon():
+    # History where Elexon under-forecast: the correction must not push above it.
+    out = an.add_calibration(_synthetic_backtest(DAYS, lambda f: f + 2_000), lookback_days=14)
+    last = out[out["delivery_date"] == DAYS[-1]]
+    assert (last["calibrated_mw"] <= last["forecast_mw"]).all()
+
+
+def test_flat_forecast_falls_back_to_scale_factor():
+    out = an.add_calibration(
+        _synthetic_backtest(DAYS, lambda f: 0.8 * f, varying=False), lookback_days=14
+    )
+    last = out[out["delivery_date"] == DAYS[-1]]
+    assert last["slope"].iloc[0] == pytest.approx(0.8)
+    assert last["intercept_mw"].iloc[0] == 0.0
+    assert last["calibrated_mw"].iloc[0] == pytest.approx(8_000.0)
 
 
 def test_calibration_does_not_leak_d_minus_1_or_d():
-    days = [date(2026, 1, 1) + timedelta(days=i) for i in range(20)]
-    bt = _synthetic_backtest(days, 0.8)
-    target = days[-1]
+    bt = _synthetic_backtest(DAYS, lambda f: 0.8 * f - 500)
+    target = DAYS[-1]
     # Corrupt the two days a trader could not have seen settled at decision time.
     leak = bt["delivery_date"].isin([target, target - timedelta(days=1)])
     bt.loc[leak, "actual_mw"] = 99_999.0
     out = an.add_calibration(bt, lookback_days=14)
-    assert out.loc[out["delivery_date"] == target, "scale"].iloc[0] == pytest.approx(0.8)
+    row = out[out["delivery_date"] == target].iloc[0]
+    assert row["slope"] == pytest.approx(0.8)
+    assert row["intercept_mw"] == pytest.approx(-500)
 
 
 def test_calibration_needs_enough_history():
     days = [date(2026, 1, 1) + timedelta(days=i) for i in range(3)]
-    out = an.add_calibration(_synthetic_backtest(days, 0.8), lookback_days=14)
+    out = an.add_calibration(_synthetic_backtest(days, lambda f: 0.8 * f), lookback_days=14)
     assert out.loc[out["delivery_date"] == days[0], "calibrated_mw"].isna().all()
 
 

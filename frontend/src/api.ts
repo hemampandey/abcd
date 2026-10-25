@@ -44,7 +44,8 @@ export interface DayView {
   decision_cutoff: string;
   forecast_publish_time: string | null;
   calibration: {
-    scale: number | null;
+    slope: number | null;
+    intercept_mw: number | null;
     ratio_low: number | null;
     ratio_high: number | null;
     hours: number;

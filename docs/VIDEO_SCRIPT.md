@@ -1,52 +1,198 @@
-# Demo video script (max 10 min, unlisted YouTube)
+# WindSight: full video script
+
+Two parts, each **under 5 minutes** (about 650 spoken words each at a calm pace).
+Lines in **[brackets]** are what to do on screen. Everything else is what you say.
+
+---
 
 ## Before you record
 
-- [ ] Deploy first if you can, and record using the live URL (it looks more finished). Localhost is fine otherwise.
-- [ ] Browser window about 1280×800, light theme (moon/sun icon, top right), zoom 100%.
-- [ ] Open these tabs:
-  1. `/?view=day&day=2026-01-15&t=09:20`
-  2. `/?view=accuracy&t=09:20`
-  3. `/?view=day&day=2026-01-12&t=09:20`
-  4. the repo in VS Code, with a terminal ready to run `pytest -q`
-- [ ] Do one dry run with a timer. Each part must stay under 5 minutes.
-- [ ] Upload to YouTube as **Unlisted**, then open the link in an incognito window to check it plays.
+- [ ] Use the live Vercel link if it's deployed; localhost is fine otherwise.
+- [ ] Browser about 1280×800, **light theme** (moon/sun icon, top right), zoom 100%.
+- [ ] Open these tabs in order:
+  1. Landing page: `/`
+  2. Day-ahead, 15 Jan: `/?view=day&day=2026-01-15&t=09:20`
+  3. Forecast accuracy: `/?view=accuracy&t=09:20`
+  4. Day-ahead, 14 Jan: `/?view=day&day=2026-01-14&t=09:20`
+  5. VS Code with the repo open, and a terminal in `backend/`
+- [ ] Do one timed dry run. Speak slowly; pauses are fine.
+- [ ] Upload to YouTube as **Unlisted** and check the link in an incognito window.
 
 ---
 
-## Part 1: client pitch (≤ 5 min)
+## Part 1: client presentation (≈ 4:45)
 
-**Audience:** day-ahead trading team lead. **Goal:** they leave convinced the pilot found something valuable.
+*Audience: the day-ahead trading team at the utility. Goal: show them what the pilot found and why it's useful.*
 
-| Time | Screen | Say |
-|---|---|---|
-| 0:00 | Day-ahead tab, 15 Jan | "Every morning before 09:20 your team commits to tomorrow's position. Wind is the biggest unknown. Today we'll show the latest forecast you actually had at gate closure, how far to trust it, and how much cover the low-wind case needs." |
-| 0:30 | Header picker, then the line under the title | "Pick the delivery day and the auction: EPEX at 09:20 or N2EX at 09:50. The app finds the most recent Elexon wind forecast published before that moment. Here, the decision is Wednesday 09:20, so it uses the Wednesday 07:30 forecast. The 09:30 one came ten minutes too late, so it's never used." |
-| 1:00 | KPI tiles | "Elexon says 279 GWh tomorrow. Our calibrated view says 241. On a low-wind day, the P10, it's 191 GWh, so that's 50 GWh of potential shortfall to size cover for. The grey tile is hindsight: actual was 254 GWh, and our calibrated number was 34% closer than the raw forecast." |
-| 1:40 | Main chart, hover an hour | "Hour by hour: orange is Elexon, blue is calibrated, the shaded band is the 80% range, black is what happened. Hover any hour for the exact numbers. Export to CSV for your bid sheet." |
-| 2:05 | Evolution chart | "This shows how the forecast evolved: every run for this day. The highlighted one is what you had at the gate; the dashed ones came too late." |
-| 2:25 | Switch to Accuracy tab | "Now, how good is this forecast? We replayed every decision made in January. That means delivery from 2 January to 1 February, 744 delivery hours." |
-| 2:40 | KPI strip, left to right | "Three headlines. **One:** the official forecast ran high all month, by 1.75 GW on average, and wind fell short in 85% of hours. Trusting it raw leaves you short and exposed to imbalance. **Two:** our calibration, using only data you'd have had that morning, cuts the typical error by 35%, from 2.04 to 1.32 GW. **Three:** the range is honest. We promised 80% and 82% of hours landed inside." |
-| 3:25 | Daily chart, then histogram | "Day by day you can see the gap. The histogram shows misses lean heavily to shortfall, with a tail out to 6–7 GW." |
-| 3:50 | Horizon and decision-time charts | "Accuracy decays with horizon. Deciding later helps, but both auctions close in the morning. N2EX at 09:50 gets the 09:30 run and is slightly better than EPEX 09:20, which is useful when choosing a venue." |
-| 4:15 | Point at "Worst: 6.9 GW short on Mon 12 Jan", then open the 12 Jan tab, evolution chart | "The worst hour was on 12 January. Even the forecasts published after the gate were about 5 GW too high. That's consistent with wind farms being curtailed on a windy day, rather than bad weather prediction, and it's the pattern our calibration learns." |
-| 4:35 | Close | "Next steps for a production phase: daily automatic ingest, adding your demand to show net position, and alerts when the range is unusually wide. Thank you." |
+### 1. Opening: the problem (0:00 – 0:35)
+
+**[Landing page, scrolled to the top]**
+
+> Hi, I'm Hemam, and this is WindSight, a pilot we built for your day-ahead trading desk.
+>
+> Every morning your team has to buy tomorrow's electricity before the auction closes: 09:20 for EPEX, 09:50 for N2EX. The biggest unknown in that decision is wind. If wind comes in lower than forecast, you're short and buying expensive power at the last minute. If it comes in higher, you've overpaid.
+>
+> So we asked two questions. What did the wind forecast actually say when you had to decide? And how much should you trust it?
+
+### 2. The headline results (0:35 – 1:20)
+
+**[Point at the chart, then the three numbers]**
+
+> This chart is January in one picture. Orange is Elexon's official wind forecast, black is what actually happened. The orange line sits above the black almost every day.
+>
+> That's our first finding: **the official forecast ran 1.75 gigawatts too high on average.** Wind fell short of the forecast in 85% of hours. A desk that trusted it would have been short almost every day.
+>
+> Second: we built a correction that learns from the forecast's own recent track record, and it's smart about wind level: windy hours get a bigger correction than calm ones. It **cuts the typical error by 40%.**
+>
+> Third: we give you a realistic range, a low and a high case. We promised reality would land inside it 80% of the time. It did **79%** of the time, so you can rely on it.
+
+### 3. The day-ahead view (1:20 – 2:50)
+
+**[Click "Open day-ahead view". Tab 2, Thursday 15 January]**
+
+> Let me show you how your team would use it. Say it's Wednesday morning, and we're buying for Thursday the 15th.
+
+**[Point at the line under the title]**
+
+> The app knows the decision is Wednesday at 09:20, and it picks the newest forecast published before then: the 07:30 run. A newer forecast came out at 09:30, but that's ten minutes too late, so we never use it. Everything you see is what you could actually have known.
+
+**[Point at each tile, left to right]**
+
+> Elexon says 279 gigawatt-hours of wind tomorrow. Our corrected estimate is 250. And the low-wind case, a pessimistic but realistic scenario, is 202. That 48 gigawatt-hour gap is the cover you'd want to arrange in case the wind disappoints.
+>
+> The grey tile is hindsight: the actual was 254. Our 250 was within 2%; Elexon was 10% too high.
+
+**[Hover over a few hours on the main chart]**
+
+> Hour by hour: orange is Elexon, blue is our corrected forecast, the shaded band is the realistic range, and black is what happened. Your auctions trade by the hour, so this shows exactly which hours carry the risk. You can hover for exact numbers, or download the table as a CSV for your bidding sheet.
+
+**[Scroll to "How the forecast evolved"]**
+
+> This chart shows every forecast Elexon published for this day. The highlighted one is what you had at the deadline; if the lines are spread out, that's a day to be careful.
+
+### 4. Forecast accuracy (2:50 – 4:00)
+
+**[Tab 3, Forecast accuracy]**
+
+> Now the trust question. We replayed every decision made in January, which means deliveries from 2 January to 1 February: 744 hours, each scored against what actually happened.
+
+**[Point along the tiles]**
+
+> The typical hourly miss was 2 gigawatts, about 18% of normal output. One hour in ten was off by more than 4. The worst hour was 12 January, when wind fell 6.9 gigawatts short.
+
+**[Scroll to the histogram]**
+
+> This chart shows the misses: red is wind falling short, blue is extra wind. It's overwhelmingly red. The errors aren't random; they lean one way. That's what makes them correctable.
+
+**[Scroll to "Does deciding later help?"]**
+
+> And timing: N2EX closes at 09:50, after Elexon's 09:30 update, so it gets a slightly more accurate forecast than EPEX at 09:20.
+
+### 5. Being honest about the limits (4:00 – 4:25)
+
+**[Tab 4, Wednesday 14 January]**
+
+> One honest point. The correction doesn't win every day. On the 14th, Elexon was almost exactly right, and our correction pulled the number too low. Across January it helped on 26 of 31 days, which is why we always show Elexon's number alongside ours, never instead of it.
+
+### 6. Close (4:25 – 4:45)
+
+**[Back to the landing page]**
+
+> So, WindSight gives your desk three things: the forecast you actually had at the deadline, a corrected estimate that's 40% more accurate on average, and a low-wind case you can size your cover against.
+>
+> For a production version, we'd add daily automatic data updates, your demand forecast to show your net position, and an alert when the range is unusually wide. Thank you.
 
 ---
 
-## Part 2: tech lead review (≤ 5 min)
+## Part 2: technical review (≈ 4:50)
 
-**Audience:** internal tech lead. **Goal:** easy review and clear handover.
+*Audience: the internal tech lead. Goal: make the code easy to review and hand over.*
 
-| Time | Screen | Say |
-|---|---|---|
-| 0:00 | README in VS Code | "Repo layout: `backend/` is FastAPI and pandas, `frontend/` is React 19 with TypeScript and Recharts, plus Docker, Vercel config and CI. The README covers run, test and deploy. Architecture and analysis docs are in `docs/`." |
-| 0:30 | `docs/ARCHITECTURE.md` diagram | "Data flow: the Elexon client fetches FUELHH and WINDFOR into a gzipped snapshot in git. Why a snapshot: January is history, so it's reproducible, cold starts are instant on serverless, and there's no dependency on Elexon uptime. `python -m app.ingest` refreshes it, and it falls back to a live download if missing." |
-| 1:00 | `config.py` | "All business assumptions live in one file. Scope: January decisions means delivery 2 Jan – 1 Feb, because you decide one day ahead. Data from mid-December is loaded only as history for the early-January calibration, the same history a trader would have on 1 January; nothing in December is scored. Also here: gate-closure presets and band settings." |
-| 1:20 | `analysis.py`: `decision_cutoff`, `latest_forecasts` | "The core rule: the cutoff is D-1 at the chosen UK local time, converted with zoneinfo, so DST works. `merge_asof` by start_time with direction backward picks the latest forecast with publish_time at or before the cutoff. Look-ahead is structurally impossible." |
-| 1:55 | `add_calibration` | "Calibration is multiplicative because errors scale with wind level. The window is D-15 to D-2, because D-1 isn't settled at 09:20 on D-1. There's a unit test that corrupts D-1 and D and asserts nothing changes." |
-| 2:25 | `service.py`, `main.py`, `schemas.py` | "Layers: routes validate at the edge, with HH:MM regex and date range, and return 422 otherwise. The service caches backtests per decision time. Pydantic models give typed OpenAPI docs at `/api/docs`. The frontend's `api.ts` mirrors them." |
-| 2:55 | `frontend/src` | "Frontend: App holds state in the URL so views are shareable. DayView and AccuracyView are each one screen. `ui.tsx` has shared chart chrome. Colour by role, one axis per chart, hindsight explicitly labelled." |
-| 3:25 | Terminal: `pytest -q`, `npm test` | "28 backend tests: DST days, no-look-ahead, exact-cutoff inclusion, calibration leakage, metric arithmetic, and API tests on real data, for example that 09:20 picks the 07:30 run and 09:50 picks the 09:30 run. CI runs ruff, pytest, tsc, vitest, a Vite build and a Docker smoke test." |
-| 4:00 | Dockerfile, vercel.json | "Multi-stage Docker builds React, then serves it with uvicorn, giving one container, also used for Heroku. Vercel serves the static build and a Python function at `api/index.py`." |
-| 4:25 | ARCHITECTURE trade-offs table | "Known trade-offs: pandas in the request path is fine at 30k rows; at scale, precompute. Ratio calibration was chosen for explainability; next would be conditional or quantile models." |
+### 1. Overview (0:00 – 0:30)
+
+**[VS Code, README open]**
+
+> This is the technical walkthrough. The repo has two halves. `backend/` is Python, with FastAPI for the API and pandas for the analysis. `frontend/` is React with TypeScript, using Recharts for the charts. There's also a Dockerfile, the Vercel config, and a CI pipeline. The README covers how to run, test and deploy, and `docs/` has the architecture and analysis notes.
+
+### 2. Data (0:30 – 1:10)
+
+**[Open `backend/app/elexon.py`, then `backend/data/`]**
+
+> The data comes from two Elexon datasets. FUELHH gives actual wind output every half hour, and WINDFOR gives the wind forecasts: hourly targets, about eight runs a day.
+>
+> `elexon.py` downloads both in two-week chunks with retries. Rather than calling Elexon on every request, we store a compressed snapshot in the repo, about 165 kilobytes. January is history, so this keeps results reproducible and makes cold starts instant on serverless. `python -m app.ingest` rebuilds it.
+
+### 3. Business rules in one place (1:10 – 1:35)
+
+**[Open `backend/app/config.py`]**
+
+> All the business assumptions live in this one file. The brief says decisions made in January. You decide on D-1, the day before delivery, so delivery runs from 2 January to 1 February. Data from mid-December is loaded only as history for the early-January correction; it's never scored. The two gate-closure presets and the band settings are here too.
+
+### 4. The core logic (1:35 – 2:45)
+
+**[Open `backend/app/analysis.py`, scroll to `decision_cutoff` and `latest_forecasts`]**
+
+> `analysis.py` holds all the maths as pure functions, which makes it easy to test.
+>
+> The key rule is here. `decision_cutoff` turns "D-1 at 09:20 UK time" into a UTC timestamp using zoneinfo, so clock changes are handled. Then `latest_forecasts` uses pandas `merge_asof`, grouped by target hour and looking backwards in time. For each hour it finds the newest forecast published at or before the cutoff. That makes look-ahead structurally impossible.
+
+**[Scroll to `add_calibration`]**
+
+> The correction is in `add_calibration`. For each delivery day it uses only days D-15 to D-2, because at 09:20 on D-1, that day hasn't finished yet. It fits a straight line of actual against forecast on that window, so windy hours get a bigger correction than calm ones, and caps it so it never goes above Elexon's forecast, because the systematic error is over-forecasting. The range comes from the 10th and 90th percentiles of actual over corrected, in the same window.
+>
+> I compared this out of sample against a single scale factor and an uncapped line. The capped line had the lowest error, lost on no more days, and gave a range 18% narrower at the same reliability.
+
+### 5. API and frontend (2:45 – 3:30)
+
+**[Open `main.py`, then `service.py`, then `frontend/src/views/`]**
+
+> The layers are kept separate. `main.py` is just the HTTP routes. It validates the decision time and date range and returns a 422 with a clear message if they're wrong. `service.py` shapes the results and caches each backtest per decision time. Pydantic models generate typed API docs at `/api/docs`.
+>
+> On the frontend there's one file per screen: the landing page, day-ahead, accuracy and method. Shared pieces like tiles, legends and tooltips are in `ui.tsx`. The app keeps its state in the URL, so any view can be bookmarked or shared.
+
+### 6. Tests and CI (3:30 – 4:15)
+
+**[Terminal in `backend/`: run `pytest -q`]**
+
+> There are 30 backend tests. The unit tests use small synthetic data to check the domain rules: clock-change days with 23 and 25 hours, never using a forecast published after the cutoff, and the error sign. The most important one corrupts D-1 and D and checks the correction doesn't change, which proves there's no leakage. The API tests run on the real data, for example checking that 09:20 picks the 07:30 run and 09:50 picks the 09:30 run.
+>
+> The frontend has unit tests for formatting. CI runs linting, both test suites, a type check, a production build, and a Docker smoke test.
+
+### 7. Deployment and trade-offs (4:15 – 4:50)
+
+**[Open `Dockerfile`, then `vercel.json`, then the trade-offs table in `docs/ARCHITECTURE.md`]**
+
+> The Dockerfile is multi-stage: it builds the React app, then serves it and the API from one container. On Vercel, the React build is served statically and the API runs as a Python function in `api/index.py`.
+>
+> Known trade-offs: pandas in the request path is fine at 30,000 rows; at larger scale I'd precompute the backtests. And with more history, the next step for the correction would be curtailment signals and quantile regression for the range. Thanks for reviewing.
+
+---
+
+## Q&A prep: questions a reviewer might ask
+
+**Why does delivery run 2 Jan – 1 Feb and not 1–31 Jan?**
+The brief scopes *decisions* to January. You decide on D-1 for delivery on D, so the decision on 1 January is for delivery on 2 January, and the decision on 31 January is for delivery on 1 February.
+
+**Why use December data if the brief says only January?**
+Only as history for the correction, which needs the previous 14 settled days. That's exactly what a trader would have had on 1 January. Nothing in December is shown or scored.
+
+**Why compare hourly, when actuals are half-hourly?**
+WINDFOR forecasts are hourly and the day-ahead auctions trade hourly products. So the two half-hours are averaged, and hours missing a half-hour are dropped rather than half-filled.
+
+**Why not train a machine-learning model?**
+The brief allows only these two datasets, so there are no weather features, and one month is about 744 hours. A complex model would mostly overfit. The correction is already a small model, a straight line refitted every day on the last 14 settled days. I compared it against a scale factor, an uncapped line, a curve and per-wind-level factors, all out of sample, and picked the one with the lowest error that didn't lose more days.
+
+**Why does the correction sometimes make things worse (e.g. 14 Jan)?**
+It learns the recent pattern of over-forecasting and applies it every day. On calm days when Elexon happened to be right, it overshoots. It helped on 26 of 31 days and cut error by 40% overall, which is why the app always shows Elexon's number next to ours. The level-aware version also roughly halved the damage on 14 January compared with a simple scale factor.
+
+**Why a straight line, and why cap it at Elexon's forecast?**
+Elexon's miss grows with wind level, so a line (bigger cut on windy hours) fits better than one multiplier. Elexon over-forecast at every wind level in this data, so the correction should only remove over-forecast, never add wind Elexon didn't predict. Without the cap, calm hours get pushed above Elexon and two more days are lost.
+
+**Why is the forecast so consistently too high?**
+The miss grows with wind level: about −0.5 GW when the forecast is under 5 GW, about −4.6 GW above 20 GW. That's consistent with wind farms being curtailed on windy days because of grid constraints. Metered output is after curtailment; the forecast isn't. It's a hypothesis, not proven from this data alone.
+
+**How do you know there's no look-ahead?**
+Forecast selection uses `merge_asof` looking backwards from the cutoff, and the correction window ends at D-2. Both rules have dedicated tests, including one that corrupts D-1 and D and checks the result doesn't change.
+
+**What would you do next?**
+Automatic daily ingest into a database, the utility's demand to show net position, a wind-level-aware correction validated walk-forward, alerts when the range is wide, and authentication.

@@ -52,9 +52,10 @@ Deployment shapes, all from the same code:
 2. **Decision cutoff.** D-1 at the chosen UK local time, converted to UTC with `zoneinfo`, so it works across BST changes (`decision_cutoff`). Delivery days have 23, 24 or 25 hours (`delivery_hours`).
 3. **Latest forecast at cutoff.** `pd.merge_asof(..., by="start_time", direction="backward")` on `publish_time ≤ cutoff`. It never looks ahead. A forecast published exactly at the cutoff counts.
 4. **Error convention.** `actual − forecast`. Negative means wind shortfall, so the buyer is short.
-5. **Calibration and range, out of sample.** For delivery day D the window is delivery days [D-15, D-2]. D-1 is not settled at 09:20 on D-1. Multiplicative, because errors scale with forecast level:
-   - `calibrated = forecast × Σactual/Σforecast`
-   - `range = forecast × [P10, P90] of hourly actual/forecast` (hours with forecast < 1 GW excluded)
+5. **Calibration and range, out of sample.** For delivery day D the window is delivery days [D-15, D-2]. D-1 is not settled at 09:20 on D-1. The correction is wind-level-aware, because the over-forecast grows with forecast level:
+   - `fit_correction`: least-squares line `actual ≈ intercept + slope × forecast` on the window (falls back to Σactual/Σforecast if the forecast barely varies or the slope isn't positive)
+   - `apply_correction`: `calibrated = clip(min(intercept + slope × forecast, forecast), 0)`, so it only removes over-forecast and never adds wind Elexon didn't predict
+   - `range = calibrated × [P10, P90] of hourly actual/calibrated in the window` (hours below 1 GW excluded)
    - requires at least 48 hours of history, otherwise NaN
 6. **Metrics.** MAE, RMSE, bias, nMAE (MAE ÷ mean actual), P50/P90 absolute error, max shortfall/surplus, range coverage and width.
 7. **Diagnostics.**
@@ -91,7 +92,7 @@ Deployment shapes, all from the same code:
 |---|---|---|
 | Snapshot in git | Reliability, speed, reproducibility for a fixed historical scope | Going live: scheduled ingest into a DB (Postgres/Timescale) |
 | pandas in request path | Small data (about 30k rows), clear code | Larger scope: precompute backtests in a job |
-| Simple ratio calibration | Explainable to traders, out-of-sample, strong gain (−35% MAE) | Add regime features (wind level, curtailment signals), quantile regression |
+| Capped linear calibration | Explainable to traders, out-of-sample, −40% MAE, tighter range than a scale factor, same number of losing days | More history, curtailment signals, quantile regression for the range |
 | Hourly resolution | Matches WINDFOR and DA hourly products | Half-hourly products, which would need forecast interpolation |
 | Error band from empirical ratios | No distribution assumptions, verified coverage | Conditional bands by forecast level or hour |
 

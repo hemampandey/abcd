@@ -120,18 +120,42 @@ def backtest(
     return out
 
 
+def fit_correction(forecast: np.ndarray, actual: np.ndarray) -> tuple[float, float]:
+    """Least-squares line actual ~ intercept + slope * forecast.
+
+    Falls back to a pure scale factor (sum actual / sum forecast, no intercept) when
+    the forecast barely varies or the fitted slope is not positive, so a degenerate
+    window can never produce a nonsensical correction.
+    """
+    if len(forecast) >= 2 and np.std(forecast) > 1.0:
+        slope, intercept = np.polyfit(forecast, actual, 1)
+        if slope > 0:
+            return float(slope), float(intercept)
+    return float(actual.sum() / forecast.sum()), 0.0
+
+
+def apply_correction(forecast, slope: float, intercept: float):
+    """Corrected forecast, never above Elexon's and never below zero.
+
+    Elexon's systematic error is over-forecasting at every wind level, so the
+    correction only removes over-forecast; it never adds wind Elexon didn't predict.
+    """
+    return np.clip(np.minimum(intercept + slope * forecast, forecast), 0, None)
+
+
 def add_calibration(
     bt: pd.DataFrame,
     lookback_days: int = BAND_LOOKBACK_DAYS,
     quantiles: tuple[float, float] = BAND_QUANTILES,
 ) -> pd.DataFrame:
-    """Attach an out-of-sample calibrated forecast and P10-P90 band.
+    """Attach an out-of-sample, wind-level-aware calibrated forecast and P10-P90 band.
 
-    Wind forecast errors scale with the forecast level (high-wind hours are where
-    the big misses are), so both corrections are multiplicative:
+    Over-forecasting grows with wind level (small misses on calm hours, large ones
+    on windy hours), so the correction is a straight line fitted on recent history
+    rather than a single scale factor:
 
-    - calibrated_mw = forecast_mw * (sum actual / sum forecast) over the window
-    - band = forecast_mw * [P10, P90] of hourly actual/forecast ratios
+    - calibrated_mw = min(intercept + slope * forecast_mw, forecast_mw), floored at 0
+    - band = calibrated_mw * [P10, P90] of hourly actual / fitted ratios in the window
 
     For delivery day D (decided on D-1 morning) the latest fully-settled delivery
     day is D-2, so the window is days [D-1-lookback, D-2]. No information from
@@ -143,28 +167,47 @@ def add_calibration(
     for day in sorted(bt["delivery_date"].unique()):
         first, last = day - timedelta(days=lookback_days + 1), day - timedelta(days=2)
         w = hist[(hist["delivery_date"] >= first) & (hist["delivery_date"] <= last)]
-        # Ratios are unstable when the forecast is near zero; skip those hours.
-        ratios = (w["actual_mw"] / w["forecast_mw"])[w["forecast_mw"] >= MIN_RATIO_FORECAST_MW]
-        if len(ratios) >= MIN_CALIBRATION_HOURS:
-            rows.append(
-                (
-                    day,
-                    w["actual_mw"].sum() / w["forecast_mw"].sum(),
-                    ratios.quantile(lo_q),
-                    ratios.quantile(hi_q),
-                    len(ratios),
-                )
+        if len(w) < MIN_CALIBRATION_HOURS:
+            rows.append((day, np.nan, np.nan, np.nan, np.nan, len(w)))
+            continue
+        f, a = w["forecast_mw"].to_numpy(), w["actual_mw"].to_numpy()
+        slope, intercept = fit_correction(f, a)
+        fitted = apply_correction(f, slope, intercept)
+        # Ratios are unstable when the fitted value is near zero; skip those hours.
+        ok = fitted >= MIN_RATIO_FORECAST_MW
+        ratios = a[ok] / fitted[ok]
+        rows.append(
+            (
+                day,
+                slope,
+                intercept,
+                np.quantile(ratios, lo_q),
+                np.quantile(ratios, hi_q),
+                len(w),
             )
-        else:
-            rows.append((day, np.nan, np.nan, np.nan, len(ratios)))
+        )
     cal = pd.DataFrame(
-        rows, columns=["delivery_date", "scale", "ratio_lo", "ratio_hi", "calibration_hours"]
+        rows,
+        columns=[
+            "delivery_date",
+            "slope",
+            "intercept_mw",
+            "ratio_lo",
+            "ratio_hi",
+            "calibration_hours",
+        ],
     )
     out = bt.merge(cal, on="delivery_date", how="left")
-    out["calibrated_mw"] = out["forecast_mw"] * out["scale"]
+    has_fit = out["slope"].notna()
+    out["calibrated_mw"] = np.nan
+    out.loc[has_fit, "calibrated_mw"] = apply_correction(
+        out.loc[has_fit, "forecast_mw"].to_numpy(),
+        out.loc[has_fit, "slope"].to_numpy(),
+        out.loc[has_fit, "intercept_mw"].to_numpy(),
+    )
     out["calibrated_error_mw"] = out["actual_mw"] - out["calibrated_mw"]
-    out["band_low_mw"] = out["forecast_mw"] * out["ratio_lo"]
-    out["band_high_mw"] = out["forecast_mw"] * out["ratio_hi"]
+    out["band_low_mw"] = out["calibrated_mw"] * out["ratio_lo"]
+    out["band_high_mw"] = out["calibrated_mw"] * out["ratio_hi"]
     out["in_band"] = (out["actual_mw"] >= out["band_low_mw"]) & (
         out["actual_mw"] <= out["band_high_mw"]
     )

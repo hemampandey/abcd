@@ -69,17 +69,18 @@ export function MethodView({ meta }: { meta: Meta }) {
         <Card title={`Calibrated forecast & P${lo}–P${hi} range`}>
           <div className="prose">
             <p>
-              Wind errors scale with the forecast level, so corrections are multiplicative and learned from the{" "}
-              {meta.band_lookback_days} most recent <i>fully settled</i> delivery days (D-15 … D-2). D-1 is not yet
-              complete at the D-1 decision.
+              Elexon over-forecasts more on windy hours than on calm ones, so the correction depends on the wind
+              level. It is learned from the {meta.band_lookback_days} most recent <i>fully settled</i> delivery days
+              (D-15 … D-2). D-1 is not yet complete at the D-1 decision.
             </p>
             <ul>
               <li>
-                <b>Calibrated</b> = forecast × (Σ actual ÷ Σ forecast) over that window.
+                <b>Calibrated</b> = a straight line fitted to actual vs forecast over that window
+                (intercept + slope × forecast), capped so it never goes above Elexon's forecast.
               </li>
               <li>
-                <b>Range</b> = forecast × P{lo}/P{hi} of hourly actual÷forecast ratios. Hours with a forecast
-                below 1 GW are excluded because their ratios are unstable.
+                <b>Range</b> = calibrated × P{lo}/P{hi} of hourly actual ÷ calibrated ratios in the window.
+                Hours below 1 GW are excluded because their ratios are unstable.
               </li>
               <li>
                 Reliability is checked out-of-sample: the share of hours that land inside the range should be
