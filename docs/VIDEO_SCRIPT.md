@@ -98,9 +98,9 @@ Lines in **[brackets]** are what to do on screen. Everything else is what you sa
 
 **[Back to the landing page]**
 
-> So, WindSight gives your desk three things: the forecast you actually had at the deadline, a corrected estimate that's 40% more accurate on average, and a low-wind case you can size your cover against.
+> So, WindSight gives your three things: the forecast you actually had at the deadline, a corrected estimate that's 40% more accurate on average, and a low-wind case so you can size your cover.
 >
-> For a production version, we'd add daily automatic data updates, your demand forecast to show your net position, and an alert when the range is unusually wide. Thank you.
+> Thank you.
 
 ---
 
