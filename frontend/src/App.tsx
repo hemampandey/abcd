@@ -4,9 +4,10 @@ import { BrandMark, ErrorState, Icon, Loading } from "./components/ui";
 import { useFetch } from "./useFetch";
 import { AccuracyView } from "./views/AccuracyView";
 import { DayView } from "./views/DayView";
+import { LandingView } from "./views/LandingView";
 import { MethodView } from "./views/MethodView";
 
-type View = "day" | "accuracy" | "method";
+type View = "home" | "day" | "accuracy" | "method";
 
 const TABS: { id: View; label: string }[] = [
   { id: "day", label: "Day-ahead" },
@@ -18,7 +19,7 @@ const TABS: { id: View; label: string }[] = [
 function readUrl() {
   const q = new URLSearchParams(window.location.search);
   return {
-    view: (q.get("view") as View) || "day",
+    view: (q.get("view") as View) || "home",
     day: q.get("day"),
     time: q.get("t"),
     from: q.get("from"),
@@ -47,7 +48,11 @@ function Shell({ meta }: { meta: Meta }) {
   const validDay = (d: string | null) => (d && days.includes(d) ? d : null);
   const validTime = (t: string | null) => (t && /^([01]\d|2[0-3]):[0-5]\d$/.test(t) ? t : null);
 
-  const [view, setView] = useState<View>(TABS.some((t) => t.id === initial.view) ? initial.view : "day");
+  const [view, setViewState] = useState<View>(TABS.some((t) => t.id === initial.view) ? initial.view : "home");
+  const setView = (v: View) => {
+    setViewState(v);
+    window.scrollTo({ top: 0 });
+  };
   const [decisionTime, setDecisionTime] = useState(validTime(initial.time) ?? meta.default_decision_time);
   const [day, setDay] = useState(validDay(initial.day) ?? "2026-01-15");
   const [range, setRange] = useState<[string, string]>([
@@ -56,6 +61,10 @@ function Shell({ meta }: { meta: Meta }) {
   ]);
 
   useEffect(() => {
+    if (view === "home") {
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
     const q = new URLSearchParams({ view, t: decisionTime });
     if (view === "day") q.set("day", day);
     if (view === "accuracy") {
@@ -72,10 +81,10 @@ function Shell({ meta }: { meta: Meta }) {
       </a>
       <header className="topbar">
         <div className="topbar-inner">
-          <div className="brand">
+          <button className="brand" onClick={() => setView("home")} aria-label="WindSight home">
             <BrandMark />
             WindSight
-          </div>
+          </button>
           <nav className="tabs" role="tablist" aria-label="Views">
             {TABS.map((t) => (
               <button key={t.id} className="tab" role="tab" aria-selected={view === t.id} onClick={() => setView(t.id)}>
@@ -84,12 +93,13 @@ function Shell({ meta }: { meta: Meta }) {
             ))}
           </nav>
           <div className="spacer" />
-          {view !== "method" && <DecisionTimePicker meta={meta} value={decisionTime} onChange={setDecisionTime} />}
+          {(view === "day" || view === "accuracy") && <DecisionTimePicker meta={meta} value={decisionTime} onChange={setDecisionTime} />}
           <ThemeToggle />
         </div>
       </header>
 
       <main id="main" tabIndex={-1}>
+        {view === "home" && <LandingView meta={meta} open={setView} />}
         {view === "day" && <DayView meta={meta} day={day} setDay={setDay} decisionTime={decisionTime} />}
         {view === "accuracy" && (
           <AccuracyView meta={meta} decisionTime={decisionTime} range={range} setRange={setRange} />

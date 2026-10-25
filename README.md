@@ -97,6 +97,7 @@ If the snapshot files are missing, the backend downloads the data from Elexon au
 │   │   ├── format.ts            Units, dates (Europe/London), ticks, CSV export
 │   │   ├── useFetch.ts          Fetch hook with abort-on-change
 │   │   ├── components/ui.tsx    Card, KPI tile, legend, tooltip, shared chart chrome
+│   │   ├── views/LandingView.tsx  Landing page: pitch, live headline results, links into the app
 │   │   ├── views/DayView.tsx    Day-ahead view: KPIs, forecast vs range, forecast evolution, table
 │   │   ├── views/AccuracyView.tsx  Accuracy view: KPI strip, 5 diagnostic charts
 │   │   ├── views/MethodView.tsx    Definitions shown to users
