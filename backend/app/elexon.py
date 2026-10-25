@@ -1,5 +1,4 @@
-"""Thin client for the two Elexon BMRS datasets we use.
-
+"""
 - FUELHH: half-hourly outturn generation by fuel type (we keep fuelType=WIND)
 - WINDFOR: wind generation forecasts, hourly targets, ~8 runs per day
 
