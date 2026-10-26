@@ -4,21 +4,55 @@ Written for the technical reviewer. It covers how the system fits together, why 
 
 ## 1. System overview
 
+```mermaid
+flowchart TD
+    E["Elexon BMRS API<br/>FUELHH · WINDFOR"]
+    subgraph Backend["Backend (Python)"]
+        I["Ingest<br/>elexon.py · ingest.py"]
+        S["Data snapshot<br/>backend/data/*.json.gz"]
+        ST["Store<br/>store.py"]
+        C["Business rules<br/>config.py"]
+        A["Analysis<br/>analysis.py"]
+        SV["Service (cache per decision time)<br/>service.py"]
+        M["API routes<br/>main.py · schemas.py"]
+    end
+    subgraph Frontend["Frontend (React + TypeScript)"]
+        F["Typed client + views<br/>api.ts · views/*.tsx"]
+    end
+    U["Buying team (browser)"]
+
+    E -- "HTTPS, run on demand" --> I
+    I -- writes --> S
+    S -- "reads at startup" --> ST
+    ST -. "downloads if snapshot missing" .-> E
+    ST -- "forecast and actual tables" --> A
+    C -- "gates, scope, 14-day window" --> A
+    A -- "backtest results" --> SV
+    SV --> M
+    M -- "JSON over /api/*" --> F
+    F -- "tiles, charts, CSV" --> U
 ```
-             ┌──────────────────────── Browser ────────────────────────┐
-             │ React 19 + TS (Vite)  ·  Recharts  ·  state in URL query │
-             └───────────────┬──────────────────────────────────────────┘
-                             │ JSON over /api/*
-┌────────────────────────────▼─────────────────────────────────────────────┐
-│ FastAPI (main.py)  →  service.py (lru_cache per decision time)           │
-│                         │                                                │
-│                         ▼                                                │
-│                    analysis.py  (pure pandas functions, fully unit-tested)│
-│                         ▲                                                │
-│                    store.py  ← backend/data/*.json.gz (raw Elexon rows)  │
-│                         ▲                                                │
-│                    elexon.py ← data.elexon.co.uk BMRS API (ingest / fallback)│
-└──────────────────────────────────────────────────────────────────────────┘
+
+What happens when someone opens a delivery day (here 15 Jan at the 09:20 gate):
+
+```mermaid
+sequenceDiagram
+    participant B as Browser (React)
+    participant M as main.py
+    participant S as service.py
+    participant A as analysis.py
+    participant T as Tables (store.py)
+    B->>M: GET /api/day/2026-01-15?decision_time=09:20
+    M->>M: validate date and HH:MM (422 if bad)
+    M->>S: day_view(15 Jan, 09:20)
+    S->>A: full_backtest(09:20) — first request only, then cached
+    A->>T: read forecasts and actuals
+    T-->>A: 28.6k forecast rows, 2.4k actuals
+    A->>A: cutoff Wed 09:20 → newest run 07:30 → correct (D-15…D-2) → range
+    A-->>S: backtest table (cached)
+    S-->>M: tiles, 24 hours, all runs
+    M-->>B: JSON (gzipped)
+    B->>B: draw tiles and charts
 ```
 
 Deployment shapes, all from the same code:
