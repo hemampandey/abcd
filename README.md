@@ -5,8 +5,9 @@ WindSight is a web app for a UK utility's day-ahead power buying team. It answer
 1. **What did the latest wind forecast say when we had to decide?** For each delivery day it shows the newest Elexon wind forecast published before the day-ahead auction gate closure on D-1, a calibrated version of that forecast, and a P10–P90 range.
 2. **How much can we trust it?** It backtests every January 2026 decision against metered wind output. It reports MAE, bias, tail errors and reliability, plus how error changes with forecast horizon and with when you decide.
 
-> **Live app:** `<add the Vercel/Heroku URL after deploying — see "Deploy" below>`
-> **Video walkthrough:** `<add unlisted YouTube link>`
+> [Live app](https://abcd-hemam.vercel.app/)
+
+> **Video walkthrough:** [YT link](https://youtu.be/cd0MNaVhAFc)
 
 ![Stack](https://img.shields.io/badge/React_19-TypeScript-blue) ![Stack](https://img.shields.io/badge/FastAPI-pandas-green) ![Docker](https://img.shields.io/badge/Docker-ready-informational)
 
